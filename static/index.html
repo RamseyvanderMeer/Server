@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<style>
+body {font-family: Arial, Helvetica, sans-serif;}
+form {border: 3px solid #f1f1f1;}
+
+input[type=email], input[type=password] {
+  width: 95%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+}
+
+button {
+  background-color: #24a0ed;
+  color: white;
+  padding: 14px 20px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  cursor: pointer;
+  width: 30%;
+  margin-bottom: 10px;
+}
+
+button:hover {
+  opacity: 0.8;
+}
+
+.container {
+  padding: 16px;
+}
+
+span.psw {
+  float: right;
+  padding-top: 16px;
+}
+
+</style>
+</head>
+<body>
+
+<form action="/" method="post" id="form">
+    <div class="container">
+        <lable for="email">Email adress:</lable>
+        <input type="email" class="form-control" name="email">
+
+        <lable for="password">password:</lable>
+        <input type="password" class="form-control" name="password">
+    </div>
+    <button type="submit" class="btn btn-default">Submit</button>
+</form>
+
+</body>
+</html>
