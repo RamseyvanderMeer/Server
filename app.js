@@ -31,6 +31,12 @@ app.post('/',(req,res)=>{
             res.send(err);
         }
         console.log(result);
-        res.send('posted data');
+        res.send('done');
     });
+    const {emails} = db.getUsers();
+    // if (emails.indexOf(email) > -1) {
+    //     //In the array!
+    // } else {
+    //     //Not in the array
+    // }
 });
