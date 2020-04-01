@@ -14,7 +14,12 @@ app.get('/',(req,res)=>{
     res.sendFile(path.join(__dirname,'static','index.html'));
 })
 
-app.get('/users', db.getUsers)
+app.get('/users', (req,res)=>{
+    const db_Emails = db.getEmails;
+    res.send(db_Emails);
+});
+
+app.get('/userss', db.getEmails);
 
 app.listen(3000, () => {
     console.log(`App running on port ${port}.`)
@@ -30,13 +35,16 @@ app.post('/',(req,res)=>{
             console.log(err);
             res.send(err);
         }
-        console.log(result);
-        res.send('done');
     });
-    const {emails} = db.getUsers();
-    // if (emails.indexOf(email) > -1) {
-    //     //In the array!
-    // } else {
-    //     //Not in the array
-    // }
+    var usr = req.body;
+    console.log(usr);
+    console.log('a');
+    var emails = db.getEmails();
+    console.log(emails);
+    console.log('b');
+    if (emails.indexOf(usr.email) > -1) {
+        console.log(indexOf(usr.email) + usremail);
+    } else {
+        console.log('email not in emails');
+    }
 });
