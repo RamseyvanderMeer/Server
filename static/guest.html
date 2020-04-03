@@ -4,7 +4,43 @@
 
 <h1>guest</h1>
 
-<p>My first paragraph.</p>
+<p>you are logged in a a guest from here you can only veiw user blogs</p>
+
+<p>announcements</p>
+<ol id='announcements'></ol>
+
+<p>User Blog</p>
+<ol id='olblog'></ol>
+
+<script>
+    readUsers();
+    async function readUsers() {
+      try{
+        const olBlog = document.getElementById("olblog")
+        const announcements = document.getElementById("announcements")
+        const result = await fetch("http://localhost:3000/all", {method:"GET"});
+        const users = await result.json();
+        console.log(users);
+        users.forEach (t=>{
+            if (t.type == 'user'){
+                const li = document.createElement("li");
+                li.textContent = t.content;
+                olBlog.appendChild(li);
+            }
+            if (t.type == 'admin'){
+                const an = document.createElement("li");
+                an.textContent = t.content;
+                announcements.appendChild(an);
+            }
+        });
+      }
+      catch(error){
+        console.log(error)
+      }
+    }
+</script>
+
+<a href="/" id="logout">logout</a>
 
 </body>
 </html>

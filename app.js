@@ -37,25 +37,24 @@ app.post('/', async (req,res)=>{
             var userPassword = user.password;
             var emails = await db.getUsers();
             emails.forEach(t=>{
-                console.log(t);
+                //console.log(t);
                 if (t.email === userEmail){
                     console.log(`${t.email} is the same as ${userEmail}`);
-                    if (t.password === userPassword){
-                        if (t.type = 'admin'){ //admin
+                    console.log(t.type);
+                    if (t.type == 'admin'){ //admin
+                        if (t.password === userPassword){
                             res.sendFile(path.join(__dirname,'static','admin.html'));
                             console.log(t.type);
                         }
-                        else if (t.type = 'user'){ //user
+                    }
+                    else if (t.type == 'user'){ //user
+                        if (t.password === userPassword){
                             res.sendFile(path.join(__dirname,'static','user.html'));
                             console.log(t.type);
                         }
-                        else if (t.type = 'guest'){ //guest
-                            res.sendFile(path.join(__dirname,'static','guest.html'));
-                            console.log(t.type);
-                        }
-                        else{
-                            res.send('no role specified');
-                        }
+                    }
+                    else{
+                        res.send('no role specified');
                     }
                 }
             });
@@ -65,6 +64,10 @@ app.post('/', async (req,res)=>{
             console.log(e);
         } 
     });  
+});
+
+app.get('/guest', (req,res)=>{
+    res.sendFile(path.join(__dirname,'static','guest.html'));
 });
 
 app.get('/',(req,res)=>{

@@ -43,7 +43,8 @@ async function getUsers() {
 async function createUser(email, password){
   try{
     await client.query("insert into email (text) values ($1)", [email]);
-    await client.query("insert into password (text) valuse ($1)", [password]);
+    await client.query("insert into password (text) values ($1)", [password]);
+    await client.query("insert into type (text) values ($1)", [type]);
     return true;
   }
   catch (error){
