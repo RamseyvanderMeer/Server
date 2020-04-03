@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-
 <style>
 body {font-family: Arial, Helvetica, sans-serif;}
 form {border: 3px solid #f1f1f1;}
@@ -45,15 +44,56 @@ span.psw {
 <body>
 
 <form action="/" method="post" id="form">
-    <div class="container">
-        <lable for="email">Email adress:</lable>
-        <input type="email" class="form-control" name="email">
+  <div class="container">
+      <lable for="email">Email adress:</lable>
+      <input type="email" class="form-control" name="email">
 
-        <lable for="password">password:</lable>
-        <input type="password" class="form-control" name="password">
-    </div>
-    <button type="submit" class="btn btn-default">Submit</button>
+      <lable for="password">password:</lable>
+      <input type="password" class="form-control" name="password">
+  </div>
+  <button id="verify" type="submit" class="btn btn-default">Submit</button>
 </form>
+
+  <ol id='olEmails'>
+
+  </ol>
+
+  <ol id='olPasswords'>
+
+  </ol>
+
+  <script>
+    readUsers();
+    document.getElementById("verify").addEventListener("click", verify);
+
+    async function readUsers() {
+      try{
+        const olEmails = document.getElementById("olEmails")
+        const olPasswords = document.getElementById("olPasswords")
+        const result = await fetch("http://localhost:3000/all", {method:"GET"});
+        const users = await result.json();
+        console.log(users);
+        users.forEach (t=>{
+          const li = document.createElement("li");
+          const lip = document.createElement("li");
+          li.textContent = t.email;
+          lip.textContent = t.password;
+          console.log(t.password);
+          console.log(lip);
+          console.log(t.email);
+          console.log(li);
+          li.id = t.id;
+          lip.id = t.id;
+          olEmails.appendChild(li);
+          olPasswords.appendChild(lip);
+        });
+      }
+      catch(error){
+        console.log(error)
+      }
+    }
+
+  </script>
 
 </body>
 </html>

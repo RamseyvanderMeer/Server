@@ -2,49 +2,84 @@ const express = require('express');
 const path = require('path');
 const Joi = require('joi');
 const bodyParser = require('body-parser');
-const app = express();
-const port = 3000;
 const db = require('./queries');
+const dotenv = require('dotenv');
+const pg = require('pg');
+const app = express();
+
+app.use(bodyParser.json());
+app.use(express.json());
 
 app.use('/public',express.static(path.join(__dirname,'static')));
-app.use(bodyParser.urlencoded({extended: false}));
-app.use(bodyParser.json()); 
+app.use(bodyParser.urlencoded({extended: false})); 
+
+dotenv.config();
+
+app.listen(process.env.PORT, ()=> console.log(`web server is running on port: ${process.env.PORT}`));
+
+var conString = process.env.db_URL;
+var client = new pg.Client(conString);
 
 app.get('/',(req,res)=>{
     res.sendFile(path.join(__dirname,'static','index.html'));
 })
 
-app.get('/users', (req,res)=>{
-    const db_Emails = db.getEmails;
-    res.send(db_Emails);
-});
-
-app.get('/userss', db.getEmails);
-
-app.listen(3000, () => {
-    console.log(`App running on port ${port}.`)
-  })
-
-app.post('/',(req,res)=>{
+app.post('/', async (req,res)=>{
     const schema = Joi.object().keys({
         email : Joi.string().trim().email().required(), 
         password : Joi.string().min(5).max(10).required()
     });
-    Joi.validate(req.body,schema,(err,result)=>{
-        if(err){
-            console.log(err);
-            res.send(err);
+    Joi.validate(req.body,schema, async (err,result)=>{
+        try{
+            await db.connect();
+            var user = req.body;
+            var userEmail = user.email;
+            var userPassword = user.password;
+            var emails = await db.getUsers();
+            emails.forEach(t=>{
+                console.log(t);
+                if (t.email === userEmail){
+                    console.log(`${t.email} is the same as ${userEmail}`);
+                    if (t.password === userPassword){
+                        if (t.type = 'admin'){ //admin
+                            res.sendFile(path.join(__dirname,'static','admin.html'));
+                            console.log(t.type);
+                        }
+                        else if (t.type = 'user'){ //user
+                            res.sendFile(path.join(__dirname,'static','user.html'));
+                            console.log(t.type);
+                        }
+                        else if (t.type = 'guest'){ //guest
+                            res.sendFile(path.join(__dirname,'static','guest.html'));
+                            console.log(t.type);
+                        }
+                        else{
+                            res.send('no role specified');
+                        }
+                    }
+                }
+            });
+            
         }
-    });
-    var usr = req.body;
-    console.log(usr);
-    console.log('a');
-    var emails = db.getEmails();
-    console.log(emails);
-    console.log('b');
-    if (emails.indexOf(usr.email) > -1) {
-        console.log(indexOf(usr.email) + usremail);
-    } else {
-        console.log('email not in emails');
+        catch (e){
+            console.log(e);
+        } 
+    });  
+});
+
+app.get('/',(req,res)=>{
+    res.sendFile(path.join(__dirname,'static','index.html'));
+  })
+  
+app.get('/all', async (req, res)=>{
+    try{
+      await db.connect();
+      const users = await db.getUsers();
+      res.setHeader('Content-Type', 'application/json');
+      res.send(JSON.stringify(users));
+    }
+    catch (error){
+      console.error(error);
     }
 });
+  
