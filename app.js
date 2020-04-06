@@ -6,6 +6,8 @@ const db = require('./queries');
 const dotenv = require('dotenv');
 const pg = require('pg');
 const app = express();
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
 
 app.use(bodyParser.json());
 app.use(express.json());
@@ -74,15 +76,32 @@ app.get('/',(req,res)=>{
     res.sendFile(path.join(__dirname,'static','index.html'));
   })
   
-app.get('/all', async (req, res)=>{
-    try{
-      await db.connect();
-      const users = await db.getUsers();
-      res.setHeader('Content-Type', 'application/json');
-      res.send(JSON.stringify(users));
-    }
-    catch (error){
-      console.error(error);
-    }
+app.get('/register', async (req, res)=>{
+    res.sendFile(path.join(__dirname,'static','register.html'));
 });
-  
+
+
+//work in progress
+app.post('/register', (req,res)=>{
+    const schema = Joi.object().keys({
+        email : Joi.string().trim().email().required(), 
+        password : Joi.string().min(5).max(10).required()
+    });
+    Joi.validate(req.body,schema, async (err,result)=>{
+        try{
+            await client.connect();
+            const user = req.body;
+            const email = user.email;
+            const password = user.password;
+            const type = user.type;
+            console.log(type + email + password);
+            await client.query('INSERT INTO users (email, password, type) VALUES (?,?,?)', [email, password, type], (err, results) => {
+                if(err) throw err;
+            });
+            res.sendFile(path.join(__dirname,'static','index.html'));
+        }
+        catch (e){
+            console.log(e);
+        } 
+    });  
+});
