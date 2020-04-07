@@ -45,6 +45,10 @@ span.psw {
 
 <h1>login</h1>
 
+<% if (messages.error) { %>
+  <%= messages.error %>
+<% } %>
+
 <form action="/" method="post" id="form">
   <div class="container">
       <lable for="email">Email adress:</lable>

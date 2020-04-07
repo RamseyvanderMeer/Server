@@ -4,94 +4,105 @@ const Joi = require('joi');
 const bodyParser = require('body-parser');
 const db = require('./queries');
 const dotenv = require('dotenv');
-const pg = require('pg');
 const bcrypt = require('bcrypt')
+const passport = require('passport');
+const methodOverride = require('method-override');
+const flash = require('express-flash');
+const session = require('express-session');
 const app = express();
 
 dotenv.config();
 
-var conString = process.env.db_URL;
-var client = new pg.Client(conString);
+var users = [];
+(async () => {
+    await db.connect();
+    users = await db.getUsers();
+})();
 
+const initpassport = require('./passport-config');
+initpassport(
+    passport,
+    email => users.find(user => user.email === email),
+    id => users.find(user => user.id === id)
+);
+
+app.use(flash());
+app.use(session({ 
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false
+}));
+app.use(passport.initialize());
+app.use(passport.session());
 app.use(bodyParser.json());
 app.use(express.json());
+app.use(methodOverride('_method'));
 
 app.set('view-engine', 'ejs');
 app.use(express.urlencoded({ extended: false }));
 
-app.use('/public',express.static(path.join(__dirname,'static')));
-app.use(bodyParser.urlencoded({extended: false})); 
-
-dotenv.config();
-
 app.listen(process.env.PORT, ()=> console.log(`web server is running on port: ${process.env.PORT}`));
 
-var conString = process.env.db_URL;
-var client = new pg.Client(conString);
-
-app.get('/',(req,res)=>{
+app.get('/', checkAuthenticated, (req,res)=>{
     res.render('index.ejs');
 });
 
-app.get('/register',(req,res)=>{
+app.get('/register', checkAuthenticated, (req,res)=>{
     res.render('register.ejs');
 });
 
-app.post('/', async (req,res)=>{
-    const schema = Joi.object().keys({
-        email : Joi.string().trim().email().required(), 
-        password : Joi.string().min(5).max(10).required()
-    });
-    Joi.validate(req.body,schema, async (err,result)=>{
-        try{
-            await db.connect();
-            var user = req.body;
-            var userEmail = user.email;
-            var userPassword = user.password;
-            var users = await db.getUsers();
-            users.forEach(t=>{
-                if (t.email === userEmail){
-                    console.log(`${t.email} is the same as ${userEmail}`);
-                    if (t.admin == true){ //admin
-                        if (t.password === userPassword){
-                            console.log(t.name);
-                            res.render('admin.ejs', { name: t.name});
-                        }
-                    }
-                    else if (t.admin == false){ //user
-                        if (t.password === userPassword){
-                            res.render('user.ejs');
-                        }
-                    }
-                    else{
-                        res.send('no role specified');
-                    }
-                }
-            });
-            
-        }
-        catch (e){
-            console.log(e);
-        } 
-    });  
+app.get('/guest', checkAuthenticated, (req,res)=>{
+    res.render('guest.ejs');
 });
 
-app.get('/guest', (req,res)=>{
-    res.sendFile(path.join(__dirname,'static','guest.html'));
+app.get('/user', checkNotAuthenticated, (req, res)=>{
+    res.render('user.ejs', { name: req.user.name });
 });
+
+app.post('/', checkAuthenticated, passport.authenticate('local', {
+    successRedirect: '/user',
+    failureRedirect: '/',
+    failureFlash: true
+}));
   
-app.post('/register', async (req, res)=>{
-    // console.log(req.body.name + req.body.email + req.body.password);
+app.post('/register', checkAuthenticated, (req, res)=>{
     var name = req.body.name;
     var email = req.body.email;
     var password = req.body.password;
-    console.log(name + email + password);
-    try{
-        await db.connect();
-        await db.createUser(name, email, password);
-        res.render('index.ejs');
-    }
-    catch (e){
-        console.log(e);
-    }
+    const schema = Joi.object().keys({
+        email : Joi.string().trim().email().required(), 
+        password : Joi.string().min(5).max(15).required()
+    });
+    Joi.validate(req.body, schema, async (err,result)=>{
+        const hashed = await bcrypt.hash(password, 10);
+        try{
+            await db.connect();
+            await db.createUser(name, email, hashed);
+            console.log(`created user ${name} with email ${email} and password ${password} with hash ${hashed}`);
+            res.redirect('/');
+        }
+        catch (e){
+            res.redirect('/register');
+        }
+    });
 });
+
+app.delete('/logout', (req, res)=>{
+    req.logOut();
+    res.redirect('/');
+});
+
+function checkNotAuthenticated(req, res, next) {
+    if (req.isAuthenticated()) {
+      return next();
+    }
+    res.redirect('/user');
+}
+  
+function checkAuthenticated(req, res, next) {
+    if (req.isAuthenticated()) {
+      return res.redirect('/');
+    }
+    next();
+}
+  

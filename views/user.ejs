@@ -2,13 +2,15 @@
 <html>
 <body>
 
-<h1>user</h1>
+<h1>USER: <%= name %></h1>
 
 <p>As a user you can type a blog post to be veiwed by guests</p>
 
 <!-- add post func -->
 
-<a href="/" id="logout">logout</a>
+<form action="/logout?_method=DELETE" method="POST">
+    <button type="submit">Log Out</button>
+</form>
 
 </body>
 </html>
