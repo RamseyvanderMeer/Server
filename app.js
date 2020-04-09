@@ -96,12 +96,12 @@ function checkNotAuthenticated(req, res, next) {
     if (req.isAuthenticated()) {
       return next();
     }
-    res.redirect('/user');
+    res.redirect('/');
 }
   
 function checkAuthenticated(req, res, next) {
     if (req.isAuthenticated()) {
-      return res.redirect('/');
+      return res.redirect('/user');
     }
     next();
 }
