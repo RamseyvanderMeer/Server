@@ -27,7 +27,7 @@ initpassport(
 );
 
 app.use(flash());
-app.use(session({ 
+app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false
@@ -41,22 +41,27 @@ app.use(methodOverride('_method'));
 app.set('view-engine', 'ejs');
 app.use(express.urlencoded({ extended: false }));
 
-app.listen(process.env.PORT, ()=> console.log(`web server is running on port: ${process.env.PORT}`));
+app.listen(process.env.PORT, () => console.log(`web server is running on port: ${process.env.PORT}`));
 
-app.get('/', checkAuthenticated, (req,res)=>{
+app.get('/', checkAuthenticated, (req, res) => {
     res.render('index.ejs');
 });
 
-app.get('/register', checkAuthenticated, (req,res)=>{
+app.get('/register', checkAuthenticated, (req, res) => {
     res.render('register.ejs');
 });
 
-app.get('/guest', checkAuthenticated, (req,res)=>{
+app.get('/guest', checkAuthenticated, (req, res) => {
     res.render('guest.ejs');
 });
 
-app.get('/user', checkNotAuthenticated, (req, res)=>{
-    res.render('user.ejs', { name: req.user.name });
+app.get('/user', checkNotAuthenticated, (req, res) => {
+    if(req.user.admin == true){
+        res.render('admin.ejs', { name: req.user.name });
+    }
+    else{
+        res.render('user.ejs', { name: req.user.name });
+    }
 });
 
 app.post('/', checkAuthenticated, passport.authenticate('local', {
@@ -64,45 +69,48 @@ app.post('/', checkAuthenticated, passport.authenticate('local', {
     failureRedirect: '/',
     failureFlash: true
 }));
-  
-app.post('/register', checkAuthenticated, (req, res)=>{
+
+app.post('/admin', checkAuthenticated, (req, res) => {
+    res.render('admin.ejs');
+});
+
+app.post('/register', checkAuthenticated, (req, res) => {
     var name = req.body.name;
     var email = req.body.email;
     var password = req.body.password;
     const schema = Joi.object().keys({
-        email : Joi.string().trim().email().required(), 
-        password : Joi.string().min(5).max(15).required()
+        email: Joi.string().trim().email().required(),
+        password: Joi.string().min(5).max(15).required()
     });
-    Joi.validate(req.body, schema, async (err,result)=>{
+    Joi.validate(req.body, schema, async (err, result) => {
         const hashed = await bcrypt.hash(password, 10);
-        try{
+        try {
             await db.connect();
             await db.createUser(name, email, hashed);
             console.log(`created user ${name} with email ${email} and password ${password} with hash ${hashed}`);
             res.redirect('/');
         }
-        catch (e){
+        catch (e) {
             res.redirect('/register');
         }
     });
 });
 
-app.delete('/logout', (req, res)=>{
+app.delete('/logout', (req, res) => {
     req.logOut();
     res.redirect('/');
 });
 
 function checkNotAuthenticated(req, res, next) {
     if (req.isAuthenticated()) {
-      return next();
+        return next();
     }
     res.redirect('/');
 }
-  
+
 function checkAuthenticated(req, res, next) {
     if (req.isAuthenticated()) {
-      return res.redirect('/user');
+        return res.redirect('/user');
     }
     next();
 }
-  
